@@ -24,6 +24,7 @@ import os
 import sys
 import glob
 import random
+import yaml
 from multiprocessing import Process, Value, Manager, Lock
 from scapy.all import (
     RadioTap, Dot11, Dot11Auth, Dot11Deauth, EAPOL,
@@ -163,6 +164,52 @@ BURST_SIZE_OPTIMAL = 64
 INTER_PACKET_GAP = 0.0001
 EXPERIMENT_DURATION = 3600
 MAX_RESTARTS = 100
+
+# =====================================================================================
+def load_config(path: str = "config.yaml"):
+    """Load constants from a YAML config file and override module-level globals."""
+    global TARGET_BSSID_5GHZ, TARGET_BSSID_2_4GHZ
+    global SAE_SCALAR_2_4_HEX_LIST, SAE_FINITE_2_4_HEX_LIST
+    global SAE_SCALAR_5_HEX_LIST, SAE_FINITE_5_HEX_LIST
+    global SCANNER_INTERFACE, MANUELLER_KANAL_5GHZ, MANUELLER_KANAL_2_4GHZ
+    global TARGET_STA_MACS, TARGET_STA_MACS_5GHZ_SPECIAL, TARGET_STA_MACS_2_4GHZ_SPECIAL
+    global ADAPTER_KONFIGURATION
+    global PACKETS_PER_SECOND_LIMIT, BURST_SIZE_OPTIMAL, INTER_PACKET_GAP
+    global EXPERIMENT_DURATION, MAX_RESTARTS
+
+    if not os.path.isfile(path):
+        print(f"[CONFIG] File '{path}' not found — using hardcoded defaults.")
+        return
+
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            c = yaml.safe_load(f)
+    except yaml.YAMLError as e:
+        sys.exit(f"[CONFIG ERROR] Invalid YAML in '{path}': {e}")
+
+    def get(key, default):
+        return c[key] if key in c else default
+
+    TARGET_BSSID_5GHZ               = get("target_bssid_5ghz",               TARGET_BSSID_5GHZ)
+    TARGET_BSSID_2_4GHZ             = get("target_bssid_2_4ghz",             TARGET_BSSID_2_4GHZ)
+    SAE_SCALAR_2_4_HEX_LIST         = get("sae_scalar_2_4_hex_list",         SAE_SCALAR_2_4_HEX_LIST)
+    SAE_FINITE_2_4_HEX_LIST         = get("sae_finite_2_4_hex_list",         SAE_FINITE_2_4_HEX_LIST)
+    SAE_SCALAR_5_HEX_LIST           = get("sae_scalar_5_hex_list",           SAE_SCALAR_5_HEX_LIST)
+    SAE_FINITE_5_HEX_LIST           = get("sae_finite_5_hex_list",           SAE_FINITE_5_HEX_LIST)
+    SCANNER_INTERFACE               = get("scanner_interface",               SCANNER_INTERFACE)
+    MANUELLER_KANAL_5GHZ            = get("channel_5ghz",                    MANUELLER_KANAL_5GHZ)
+    MANUELLER_KANAL_2_4GHZ          = get("channel_2_4ghz",                  MANUELLER_KANAL_2_4GHZ)
+    TARGET_STA_MACS                 = get("target_sta_macs",                 TARGET_STA_MACS)
+    TARGET_STA_MACS_5GHZ_SPECIAL    = get("target_sta_macs_5ghz_special",    TARGET_STA_MACS_5GHZ_SPECIAL)
+    TARGET_STA_MACS_2_4GHZ_SPECIAL  = get("target_sta_macs_2_4ghz_special",  TARGET_STA_MACS_2_4GHZ_SPECIAL)
+    ADAPTER_KONFIGURATION           = get("adapter_konfiguration",           ADAPTER_KONFIGURATION)
+    PACKETS_PER_SECOND_LIMIT        = get("packets_per_second_limit",        PACKETS_PER_SECOND_LIMIT)
+    BURST_SIZE_OPTIMAL              = get("burst_size_optimal",              BURST_SIZE_OPTIMAL)
+    INTER_PACKET_GAP                = get("inter_packet_gap",                INTER_PACKET_GAP)
+    EXPERIMENT_DURATION             = get("experiment_duration",             EXPERIMENT_DURATION)
+    MAX_RESTARTS                    = get("max_restarts",                    MAX_RESTARTS)
+
+    print(f"[CONFIG] Loaded from '{path}'")
 
 # =====================================================================================
 def parse_airodump_csv(csv_file):
@@ -685,6 +732,8 @@ def validate_configuration():
 
 def main():
     if os.geteuid() != 0: sys.exit("[ERROR] Run with sudo!")
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+    load_config(config_path)
     print("\n" + "="*80 + "\nWPA3-SAE DoS Orchestrator - CORRECTED EDITION\n" + "="*80)
     if not validate_configuration(): sys.exit(1)
     cleanup({})

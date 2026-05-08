@@ -1,0 +1,29 @@
+target_bssid_5ghz: "AA:BB:CC:DD:EE:11"
+target_bssid_2_4ghz: "AA:BB:CC:DD:EE:11"
+
+sae_scalar_2_4_hex_list: []
+sae_finite_2_4_hex_list: []
+sae_scalar_5_hex_list: []
+sae_finite_5_hex_list: []
+
+scanner_interface: ""
+channel_5ghz: "104"
+channel_2_4ghz: "6"
+
+target_sta_macs: []
+target_sta_macs_5ghz_special: []
+target_sta_macs_2_4ghz_special: []
+
+adapter_konfiguration:
+  #wlan7mon:
+  #  band: "5GHz"
+  #  angriff: "case13_radio_confusion_mediatek"
+  wlan1:
+    band: "2.4GHz"
+    angriff: "case1_denial_of_internet"
+
+packets_per_second_limit: 1000
+burst_size_optimal: 64
+inter_packet_gap: 0.0001
+experiment_duration: 3600
+max_restarts: 100
